@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGPA Calculator</title>
+    <style>
+        body {
+            background-color: #3498db;
+            font-family: Arial, sans-serif;
+            color: white;
+            text-align: center;
+        }
+        h1 {
+            color: #27ae60;
+            margin-top: 20px;
+        }
+        .container {
+            width: 50%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            color: black;
+            border-radius: 10px;
+        }
+        label, input, select {
+            display: block;
+            margin: 10px 0;
+            width: 100%;
+            padding: 8px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            color: blue;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>CGPA Calculator</h1>
+
+    <div id="semesterContainers"></div>
+
+    <button onclick="addSemester()">Add Another Semester</button>
+
+    <div id="result"></div>
+
+    <script>
+        let semesterCount = 0;
+
+        // Adds a new semester form
+        function addSemester() {
+            semesterCount++;
+            const semesterContainer = document.createElement('div');
+            semesterContainer.classList.add('container');
+            semesterContainer.id = `semester${semesterCount}`;
+
+            semesterContainer.innerHTML = `
+                <h2>Semester ${semesterCount}</h2>
+                <div id="courseContainer${semesterCount}">
+                    ${getCourseHTML(1, semesterCount)}
+                </div>
+                <button onclick="addCourse(${semesterCount})">Add Course</button>
+                <button onclick="calculateSemesterCGPA(${semesterCount})">Calculate Semester ${semesterCount} CGPA</button>
+                <div id="error${semesterCount}" class="error"></div>
+                <div id="cgpa${semesterCount}" class="cgpaResult"></div>
+            `;
+
+            document.getElementById('semesterContainers').appendChild(semesterContainer);
+        }
+
+        // Returns the HTML for a new course row
+        function getCourseHTML(courseNumber, semesterId) {
+            return `
+                <div class="course" id="course${courseNumber}_${semesterId}">
+                    <label for="courseCode${courseNumber}_${semesterId}">Course Code:</label>
+                    <input type="text" id="courseCode${courseNumber}_${semesterId}" placeholder="Enter Course Code">
+                    
+                    <label for="grade${courseNumber}_${semesterId}">Grade:</label>
+                    <select id="grade${courseNumber}_${semesterId}">
+                        <option value="">Select Grade</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                    </select>
+                    
+                    <label for="unit${courseNumber}_${semesterId}">Credit Units:</label>
+                    <input type="number" min="1" id="unit${courseNumber}_${semesterId}" placeholder="Enter Credit Units">
+                </div>
+            `;
+        }
+
+        // Adds a new course row for a specific semester
+        function addCourse(semesterId) {
+            const courseContainer = document.getElementById(`courseContainer${semesterId}`);
+            const courseCount = courseContainer.childElementCount + 1;
+            courseContainer.innerHTML += getCourseHTML(courseCount, semesterId);
+        }
+
+        // Grade to grade point mapping
+        const gradeToPoint = {
+            "A": 5,
+            "B": 4,
+            "C": 3,
+            "D": 2,
+            "E": 1,
+            "F": 0
+        };
+
+        // Calculate CGPA for a semester
+        function calculateSemesterCGPA(semesterId) {
+            let totalUnits = 0;
+            let totalGradePoints = 0;
+            let hasError = false;
+
+            const errorElement = document.getElementById(`error${semesterId}`);
+            const cgpaElement = document.getElementById(`cgpa${semesterId}`);
+            const courseContainer = document.getElementById(`courseContainer${semesterId}`);
+
+            errorElement.textContent = '';
+            cgpaElement.textContent = '';
+
+            const courses = courseContainer.getElementsByClassName('course');
+
+            for (let i = 0; i < courses.length; i++) {
+                const courseCode = document.getElementById(`courseCode${i + 1}_${semesterId}`).value;
+                const grade = document.getElementById(`grade${i + 1}_${semesterId}`).value;
+                const unit = parseFloat(document.getElementById(`unit${i + 1}_${semesterId}`).value);
+
+                if (!courseCode || !grade || isNaN(unit)) {
+                    errorElement.textContent = 'Please fill all fields for each course.';
+                    hasError = true;
+                    break;
+                }
+
+                const gradePoint = gradeToPoint[grade];
+                totalGradePoints += gradePoint * unit;
+                totalUnits += unit;
+            }
+
+            if (!hasError) {
+                if (totalUnits === 0) {
+                    errorElement.textContent = 'Total credit units cannot be zero.';
+                } else {
+                    const cgpa = totalGradePoints / totalUnits;
+                    cgpaElement.innerHTML = `Semester ${semesterId} CGPA: <b>${cgpa.toFixed(2)}</b>`;
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>
